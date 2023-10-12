@@ -1,13 +1,49 @@
-import { useState, ChangeEvent, useEffect } from "react";
+import { useState, ChangeEvent, FormEvent } from "react";
 import "./ClockContstructor.css";
 import Clock from "../Clock/Clock";
-import getClockOptions from "../services/getClockOptions";
+import getTimeZoneValue from "../services/getTimeZoneValue";
 
 export default function ClockConstructor() {
+  const [clocksList, setClocksList] = useState<
+    {
+      title: string;
+      timeZoneValue: number;
+      id: string;
+      callback(id: string): void;
+    }[]
+  >([]);
   const [state, setState] = useState({
     title: "",
     timeZone: "",
   });
+
+  const deleteClock = (id: string) => {
+    setClocksList((prev) => prev.filter((el) => el.id !== id));
+  };
+
+  const createClock = (e: FormEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    if (!state.title || !state.timeZone) {
+      return;
+    }
+
+    setClocksList((prev) => [
+      ...prev,
+      ...[
+        {
+          title: state.title,
+          timeZoneValue: getTimeZoneValue(state.timeZone),
+          id: `${Math.random()}`,
+          callback: deleteClock,
+        },
+      ],
+    ]);
+
+    setState(() => ({
+      title: "",
+      timeZone: "",
+    }));
+  };
 
   const onChangeHandler = (e: ChangeEvent<HTMLInputElement>) => {
     const name = e.target.name;
@@ -28,6 +64,7 @@ export default function ClockConstructor() {
               name="title"
               id="input-title"
               type="text"
+              value={state.title}
               className="form__input-title"
             />
           </div>
@@ -39,13 +76,19 @@ export default function ClockConstructor() {
               onChange={onChangeHandler}
               name="timeZone"
               type="text"
+              id="input-time-zone"
+              value={state.timeZone}
               className="form__input-time-zone"
             />
           </div>
-          <button>Добавить</button>
+          <button onClick={createClock}>Добавить</button>
         </form>
       </div>
-      <Clock {...getClockOptions()} />
+      <div className="clock-containerList">
+        {clocksList.map((el, id) => (
+          <Clock key={id} {...el} />
+        ))}
+      </div>
     </>
   );
 }

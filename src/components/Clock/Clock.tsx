@@ -1,44 +1,62 @@
 import "./Clock.css";
 import { useState, useEffect } from "react";
 import HourHand from "./HourHand/HourHand";
+import getClockOptions from "../services/getClockOptions";
 
 export default function Clock({
-  hours,
-  minutes,
-  seconds,
+  title,
+  timeZoneValue,
+  id,
+  callback,
 }: {
-  hours: number;
-  minutes: number;
-  seconds: number;
+  title: string;
+  timeZoneValue: number;
+  id: string;
+  callback: (arg: string) => void;
 }) {
-  const [state, setState] = useState(0);
+  const [hours, setHours] = useState(0);
+  const [minutes, setMinutes] = useState(0);
+  const [seconds, setSeconds] = useState(0);
 
-  const clocks = [
-    { data: ((hours % 12) + state / 3600) * 30, name: "hours" },
-    { data: (minutes + state / 60) * 6, name: "minutes" },
-    { data: seconds + (state % 60) * 6, name: "seconds" },
+  let timeout: number;
+
+  const clockProps = [
+    { data: hours, name: "hours" },
+    { data: minutes, name: "minutes" },
+    { data: seconds, name: "seconds" },
   ];
 
-  let timeout: undefined | number;
-
-  const loadClockProps = () => {
-    setState((prev) => prev + 1);
+  const getClockProps = () => {
+    const { hours, minutes, seconds } = getClockOptions(timeZoneValue);
+    setHours(hours);
+    setMinutes(minutes);
+    setSeconds(seconds);
   };
 
-  useEffect(loadClockProps, []);
+  useEffect(getClockProps, []);
   useEffect(() => {
-    timeout = window.setTimeout(loadClockProps, 1000);
+    timeout = window.setTimeout(() => {
+      getClockProps();
+    }, 1000);
 
     return () => {
       window.clearTimeout(timeout);
     };
-  }, [state]);
+  }, [seconds]);
 
   return (
-    <div className="clock">
-      {clocks.map((el, id) => (
-        <HourHand key={id} {...el} />
-      ))}
+    <div className="container">
+      <div className="container__wrap">
+        <h3 className="container__title">{title}</h3>
+        <span className="container__close-btn" onClick={() => callback(id)}>
+          &#10060;
+        </span>
+      </div>
+      <div className="clock">
+        {clockProps.map((el, id) => (
+          <HourHand key={id} {...el} />
+        ))}
+      </div>
     </div>
   );
 }
